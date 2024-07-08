@@ -1,0 +1,42 @@
+:host {
+  .table-auto {
+    border-collapse: collapse;
+    width: 100%;
+  }
+
+  .table-auto th,
+  .table-auto td {
+    border: 1px solid #ccc;
+    padding: 8px;
+    text-align: center;
+  }
+
+  .bg-gray-100 {
+    background-color: #f0f0f0;
+  }
+
+  .bg-gray-200 {
+    background-color: #e0e0e0;
+  }
+
+  .bg-gray-300 {
+    background-color: #d0d0d0;
+  }
+
+  .bg-gray-400 {
+    background-color: #c0c0c0;
+  }
+
+  .font-semibold {
+    font-weight: 600;
+  }
+
+  .font-bold {
+    font-weight: 700;
+  }
+
+  .border-none {
+    border: none;
+  }
+
+}
