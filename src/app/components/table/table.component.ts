@@ -1,27 +1,38 @@
-import { Component, Inject, OnInit, afterNextRender } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Inject, OnInit, afterNextRender, inject } from '@angular/core';
 import { Category, MonthlyTotals } from '../../models';
 import { CommonModule, DOCUMENT } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { allMonths, dataDefault } from '../../untils';
+import { NumberDirective } from '../../untils/directives/input-only-number.directive';
 
 @Component({
   selector: 'app-table',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, NumberDirective],
+  providers: [NumberDirective],
   templateUrl: './table.component.html',
-  styleUrls: ['./table.component.scss']
+  styleUrls: ['./table.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TableComponent implements OnInit {
-  categories: Category[] = dataDefault;
+
+  private cdr = inject(ChangeDetectorRef);
+
+  categoriesIncome: Category[] = dataDefault;
+  categoriesExpenses: Category[] = dataDefault;
   allMonths: string[] = allMonths;
   selectedMonths: string[] = ['January 2024', 'February 2024', 'March 2024'];
   displayedMonths: string[] = this.selectedMonths;
+
   incomeTotal: MonthlyTotals = this.initializeMonthlyTotals();
   totalIncome: number = 0;
+
   expenseTotal: MonthlyTotals = this.initializeMonthlyTotals();
   totalExpenses: number = 0;
+
   profitLoss: MonthlyTotals = this.initializeMonthlyTotals();
   totalProfitLoss: number = 0;
+
   openingBalance: number = 0;
   closingBalance: number = 0;
 
@@ -37,7 +48,8 @@ export class TableComponent implements OnInit {
    }
 
   ngOnInit(): void {
-    this.calculateTotals();
+    this.calculateTotals(this.categoriesIncome);
+    this.calculateTotals(this.categoriesExpenses);
   }
 
   initializeMonthlyTotals(): MonthlyTotals {
@@ -50,47 +62,53 @@ export class TableComponent implements OnInit {
 
   updateDisplayedMonths(): void {
     this.displayedMonths = [...this.selectedMonths];
-    this.calculateTotals();
+    this.calculateTotals(this.categoriesIncome);
+    this.calculateTotals(this.categoriesExpenses);
   }
 
-  calculateTotals(): void {
+  calculateTotals(categories: Category[]): void {
     this.totalIncome = 0;
     this.totalExpenses = 0;
     this.totalProfitLoss = 0;
 
-    for (const category of this.categories) {
+    for (const category of categories) {
       category.total = 0;
       for (const month of this.displayedMonths) {
-        category.total += category.monthlyTotals[month] || 0;
-        this.incomeTotal[month] = (this.incomeTotal[month] || 0) + (category.monthlyTotals[month] || 0);
+        category.total += Number(category.monthlyTotals[month] || 0);
+        this.incomeTotal[month] = Number(this.incomeTotal[month] || 0) + Number(category.monthlyTotals[month] || 0);
       }
-      this.totalIncome += category.total;
+      this.totalIncome += Number(category.total);
     }
 
-    for (const category of this.categories) {
+    for (const category of categories) {
       for (const month of this.displayedMonths) {
-        this.expenseTotal[month] = (this.expenseTotal[month] || 0) + (category.monthlyTotals[month] || 0);
+        this.expenseTotal[month] = Number(this.expenseTotal[month] || 0) + Number(category.monthlyTotals[month] || 0);
       }
-      this.totalExpenses += category.total;
+      this.totalExpenses += Number(category.total);
     }
 
     for (const month of this.displayedMonths) {
-      this.profitLoss[month] = (this.incomeTotal[month] || 0) - (this.expenseTotal[month] || 0);
-      this.totalProfitLoss += this.profitLoss[month];
+      this.profitLoss[month] = Number(this.incomeTotal[month] || 0) - Number(this.expenseTotal[month] || 0);
+      this.totalProfitLoss += Number(this.profitLoss[month]);
     }
 
-    this.closingBalance = this.openingBalance + this.totalProfitLoss;
+    this.closingBalance = Number(this.openingBalance) + Number(this.totalProfitLoss);
   }
 
-  addParentCategory(): void {
+  addParentCategory(type = 'Income'): void {
     const newCategory: Category = {
       name: 'New Parent Category',
       monthlyTotals: this.initializeMonthlyTotals(),
       total: 0,
       subcategories: []
     };
-    this.categories.push(newCategory);
-    this.calculateTotals();
+    if (type === 'Income') {
+      this.categoriesIncome.push(newCategory);
+      this.calculateTotals(this.categoriesIncome);
+    } else {
+      this.categoriesExpenses.push(newCategory);
+      this.calculateTotals(this.categoriesExpenses);
+    }
   }
 
   addSubcategory(parentCategory: Category): void {
@@ -103,16 +121,24 @@ export class TableComponent implements OnInit {
       parentCategory.subcategories = [];
     }
     parentCategory.subcategories.push(newSubcategory);
-    this.calculateTotals();
+    this.calculateTotals(this.categoriesIncome);
+    this.calculateTotals(this.categoriesExpenses);
   }
 
-  deleteCategory(category: Category, parentCategory?: Category): void {
+  deleteCategory(category: Category, parentCategory?: Category, type = 'Income'): void {
     if (parentCategory) {
       parentCategory.subcategories = parentCategory.subcategories?.filter(sub => sub !== category);
     } else {
-      this.categories = this.categories.filter(cat => cat !== category);
+      if (type === 'Income') {
+        this.categoriesIncome = this.categoriesIncome.filter(cat => cat !== category);
+
+      } else {
+
+        this.categoriesExpenses = this.categoriesExpenses.filter(cat => cat !== category);
+      }
     }
-    this.calculateTotals();
+    this.calculateTotals(this.categoriesIncome);
+    this.calculateTotals(this.categoriesExpenses);
   }
 
   onEnterKey(category: Category, index: number): void {
@@ -122,7 +148,8 @@ export class TableComponent implements OnInit {
     } else {
       this.addParentCategory();
     }
-    this.calculateTotals();
+    this.calculateTotals(this.categoriesIncome);
+    this.calculateTotals(this.categoriesExpenses);
   }
 
   onKeyDown(event: KeyboardEvent, category: Category, index: number): void {
@@ -154,7 +181,8 @@ export class TableComponent implements OnInit {
     this.displayedMonths.forEach(month => {
       category.monthlyTotals[month] = +value;
     });
-    this.calculateTotals();
+    this.calculateTotals(this.categoriesIncome);
+    this.calculateTotals(this.categoriesExpenses);
     alert('Apply to all clicked');
   }
 }

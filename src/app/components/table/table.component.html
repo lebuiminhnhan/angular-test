@@ -10,20 +10,21 @@
   <table class="table-auto w-full">
     <thead>
       <tr>
-        <th class="border px-4 py-2">Category</th>
+        <th class="border px-4 py-2">Start Period V End Period V</th>
         <th class="border px-4 py-2" *ngFor="let month of displayedMonths">{{ month }}</th>
-        <th class="border px-4 py-2">Total</th>
         <th class="border px-4 py-2">Actions</th>
       </tr>
     </thead>
     <!-- Table body -->
     <tbody>
-      <!-- Parent categories -->
-      <ng-container *ngFor="let category of categories">
-        <tr class="bg-gray-100">
+      <tr>
+        <td class="border font-bold">Income</td>
+      </tr>
+      <ng-container *ngFor="let category of categoriesIncome">
+        <tr>
           <td class="border px-4 py-2">{{ category.name }}</td>
           <td class="border px-4 py-2" *ngFor="let month of displayedMonths; let i = index">
-            <input type="number" id="input-{{ category.name }}-{{ i }}" class="w-full border-none text-center focus:outline-none"
+            <input type="text" numbersOnly id="input-{{ category.name }}-{{ i }}" class="w-full border-none text-center focus:outline-none"
                    [(ngModel)]="category.monthlyTotals[month]" (keyup.enter)="onEnterKey(category, i)" (keydown)="onKeyDown($event, category, i)" (contextmenu)="onRightClick($event, category, i)">
           </td>
           <td class="border px-4 py-2">{{ category.total }}</td>
@@ -39,7 +40,7 @@
           <tr *ngFor="let subcategory of category.subcategories">
             <td class="border px-4 py-2 pl-8">{{ subcategory.name }}</td>
             <td class="border px-4 py-2" *ngFor="let month of displayedMonths; let i = index">
-              <input type="number" id="input-{{ subcategory.name }}-{{ i }}" class="w-full border-none text-center focus:outline-none"
+              <input type="text" numbersOnly id="input-{{ subcategory.name }}-{{ i }}" class="w-full border-none text-center focus:outline-none"
                      [(ngModel)]="subcategory.monthlyTotals[month]" (keyup.enter)="onEnterKey(subcategory, i)" (keydown)="onKeyDown($event, subcategory, i)" (contextmenu)="onRightClick($event, subcategory, i)">
             </td>
             <td class="border px-4 py-2">{{ subcategory.total }}</td>
@@ -50,21 +51,58 @@
           </tr>
         </ng-container>
       </ng-container>
+      <tr>
+        <td class="border font-bold">Expenses</td>
+      </tr>
+      <ng-container *ngFor="let category of categoriesExpenses">
+        <tr>
+          <td class="border px-4 py-2">{{ category.name }}</td>
+          <td class="border px-4 py-2" *ngFor="let month of displayedMonths; let i = index">
+            <input type="text" numbersOnly id="input-{{ category.name }}-{{ i }}" class="w-full border-none text-center focus:outline-none"
+                   [(ngModel)]="category.monthlyTotals[month]" (keyup.enter)="onEnterKey(category, i)" (keydown)="onKeyDown($event, category, i)" (contextmenu)="onRightClick($event, category, i)">
+          </td>
+          <td class="border px-4 py-2">{{ category.total }}</td>
+          <td class="border px-4 py-2">
+            <button class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2"
+                    (click)="deleteCategory(category)">X</button>
+            <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2"
+                    (click)="addSubcategory(category)">Add sub</button>
+          </td>
+        </tr>
+        <!-- Subcategories -->
+        <ng-container *ngIf="category.subcategories">
+          <tr *ngFor="let subcategory of category.subcategories">
+            <td class="border px-4 py-2 pl-8">{{ subcategory.name }}</td>
+            <td class="border px-4 py-2" *ngFor="let month of displayedMonths; let i = index">
+              <input type="text" numbersOnly id="input-{{ subcategory.name }}-{{ i }}" class="w-full border-none text-center focus:outline-none"
+                     [(ngModel)]="subcategory.monthlyTotals[month]" (keyup.enter)="onEnterKey(subcategory, i)" (keydown)="onKeyDown($event, subcategory, i)" (contextmenu)="onRightClick($event, subcategory, i)">
+            </td>
+            <td class="border px-4 py-2">{{ subcategory.total }}</td>
+            <td class="border px-4 py-2">
+              <button class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2"
+                      (click)="deleteCategory(subcategory, category)">X</button>
+            </td>
+          </tr>
+        </ng-container>
+      </ng-container>
+      <tr>
+        <td></td>
+      </tr>
     </tbody>
     <tfoot>
-      <tr class="bg-gray-200">
+      <tr>
         <td class="border px-4 py-2 font-semibold">Income Total</td>
         <td class="border px-4 py-2 font-semibold" *ngFor="let month of displayedMonths">{{ incomeTotal[month] }}</td>
         <td class="border px-4 py-2 font-semibold">{{ totalIncome }}</td>
         <td class="border px-4 py-2"></td>
       </tr>
-      <tr class="bg-gray-200">
+      <tr>
         <td class="border px-4 py-2 font-semibold">Expense Total</td>
         <td class="border px-4 py-2 font-semibold" *ngFor="let month of displayedMonths">{{ expenseTotal[month] }}</td>
         <td class="border px-4 py-2 font-semibold">{{ totalExpenses }}</td>
         <td class="border px-4 py-2"></td>
       </tr>
-      <tr class="bg-gray-300">
+      <tr>
         <td class="border px-4 py-2 font-bold">Profit / Loss</td>
         <td class="border px-4 py-2 font-bold" *ngFor="let month of displayedMonths">{{ profitLoss[month] }}</td>
         <td class="border px-4 py-2 font-bold">{{ totalProfitLoss }}</td>
